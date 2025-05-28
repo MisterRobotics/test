@@ -18,6 +18,24 @@ pros::Motor rightMotor(-10, pros::MotorGearset::green);
 //pros::MotorGroup left_drive({4,5,6}, pros::MotorGearset::blue);
 //pros::MotorGroup right_drive({7,8,9}, pros::MotorGearset::blue);
 
+//move to pose pure pursuit limits
+const double lookaheadDistance = 6.0; // inches
+const double maxSpeed = 115.0;        // percent voltage
+const double kTurn = 1.5;             // heading correction gain
+const double posTolerance = 0.5;      // position tolerance in inches
+
+
+//Speical functions
+double clamp(double value, double minValue, double maxValue)
+{
+    return std::max(minValue, std::min(value, maxValue));
+}
+
+double distance(double x1, double y1, double x2, double y2)
+{
+    return sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1));
+}
+
 // Robot geometry
 const double x_offset = 4.0;  // Right sensor offset from center (in) 
 const double y_offset = 5.0;  // Back sensor offset from center (in)
@@ -94,7 +112,56 @@ void turnToHeading(double targetAngle)
     driveRobot(0,0);
 }
 
-void moveToPose()
+void moveToPose(float targetX, float targetY, float targetHeading)
 {
+    while(true)
+    {
+        //calculate distance to target
+        double xDistance = targetX - pos_x;
+        double yDistance = targetY - pos_y;
+        double disToTarget = distance(pos_x, pos_y, targetX, targetY);
 
+        //stop if within tolerance
+        if(disToTarget < posTolerance) 
+            break;
+        
+        //calculate angle lookahead to point
+        double angleToTarget = atan2(yDistance, xDistance);
+
+        //calculate angle to target (normalizes between -π and π)
+        double headingError = angleToTarget - heading;
+        while (headingError > M_PI) headingError -= 2 * M_PI;
+        while (headingError < -M_PI) headingError += 2 * M_PI;
+
+        //calculate movement speed
+        double fowardSpeed = clamp(disToTarget * 10, -maxSpeed, maxSpeed);
+        double turnSpeed = clamp(angleToTarget * kTurn * 100, -maxSpeed, maxSpeed);
+
+        //calculate drive power
+        double leftPower = fowardSpeed - turnSpeed;
+        double rightPower = fowardSpeed + turnSpeed;
+
+        //move motors, extra 120 mutliplier to account for turning values being small due to being in radians
+        leftMotor.move(leftPower * 120);
+        rightMotor.move(rightPower * 120);
+
+        pros::delay(10);
+    }
+
+    //final heading corrections
+    double finalError = targetHeading - heading;
+    while (finalError > M_PI) finalError -= 2 * M_PI;
+    while (finalError < -M_PI) finalError += 2 * M_PI;
+
+    while (fabs(finalError) > 0.05) {
+        double turnPower = clamp(finalError * kTurn * 100, -maxSpeed, maxSpeed);
+        leftMotor.move_voltage(-turnPower / 100.0 * 12000);
+        rightMotor.move_voltage(turnPower / 100.0 * 12000);
+
+        pros::delay(10);
+        finalError = targetHeading - heading;
+    }
+
+    leftMotor.move_voltage(0);
+    rightMotor.move_voltage(0);
 }
