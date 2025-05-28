@@ -1,0 +1,8 @@
+bin/
+.idea/
+*.elf
+*.o
+*.d
+.vscode/
+*.DS_Store
+
