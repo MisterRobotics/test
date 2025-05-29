@@ -112,6 +112,7 @@ void turnToHeading(double targetAngle)
     driveRobot(0,0);
 }
 
+//move to pose fuctions: moves to a point and heading
 void moveToPose(float targetX, float targetY, float targetHeading)
 {
     while(true)
@@ -164,4 +165,9 @@ void moveToPose(float targetX, float targetY, float targetHeading)
 
     leftMotor.move_voltage(0);
     rightMotor.move_voltage(0);
+}
+
+void moveToPoint()
+{
+    
 }

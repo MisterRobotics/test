@@ -9,6 +9,7 @@ double get_y();
 double get_heading_rad();
 void coordinatePrint();
 
+//movement functions
 void moveToPoint(double target_x, double target_y);
 void turnToHeading(double targetAngle);
 void moveToPose(float targetX, float targetY, float targetHeading);
