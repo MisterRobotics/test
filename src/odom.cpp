@@ -167,7 +167,31 @@ void moveToPose(float targetX, float targetY, float targetHeading)
     rightMotor.move_voltage(0);
 }
 
-void moveToPoint()
+void moveToPoint(float targetX, float targetY)
 {
-    
+    while(true)
+    {
+        //calculate distance to target
+        double xDistance = targetX - pos_x;
+        double yDistance = targetY - pos_y;
+        double disToTarget = distance(pos_x, pos_y, targetX, targetY);
+
+        //stop if within tolerance
+        if(disToTarget < posTolerance) 
+            break;
+        
+
+        //calculate movement speed
+        double fowardSpeed = clamp(disToTarget * 10, -maxSpeed, maxSpeed);
+
+
+        //move motors, extra 120 mutliplier to account for turning values being small due to being in radians
+        leftMotor.move(fowardSpeed * 120);
+        rightMotor.move(fowardSpeed * 120);
+
+        pros::delay(10);
+    }
+
+    leftMotor.move_voltage(0);
+    rightMotor.move_voltage(0);
 }
