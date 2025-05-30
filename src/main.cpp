@@ -6,7 +6,8 @@
 int auton = 0;
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-
+pros::MotorGroup leftDrive({14,15,16}, pros::MotorGearset::blue);
+pros::MotorGroup rightDrive({-11,-12,-13}, pros::MotorGearset::blue);
 
 
 
@@ -75,6 +76,14 @@ void opcontrol()
 {
 	while(true)
 	{
+		//Variables
+        int rightY = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+        int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
+        //Drive Code for single stick
+        leftDrive.move(rightY + rightX);
+        rightDrive.move(rightY - rightX);
+
 		
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1))
 		{
