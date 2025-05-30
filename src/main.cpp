@@ -18,6 +18,14 @@ void initialize()
 	pros::lcd::initialize();
 	void odom_init();
 	pros::Task coordPrintTask(coordinatePrint);
+	pros::Task updatePos([]
+	{
+		while(true)
+		{
+			odomUpdate();
+			pros::delay(10);
+		}
+	});
 
 }
 
@@ -67,15 +75,14 @@ void opcontrol()
 {
 	while(true)
 	{
-		odomUpdate();
-
+		
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1))
 		{
 			turnToHeading(1.5708);
 		}
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2))
 		{
-			moveToPoint(124, 40);
+			moveToPoint(126, 50);
 		}
 		pros::delay(10);
 	}

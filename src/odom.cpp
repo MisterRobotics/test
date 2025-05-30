@@ -168,7 +168,7 @@ void moveToPose(float targetX, float targetY, float targetHeading)
     rightMotor.move_voltage(0);
 }
 
-void moveToPoint(double targetX, double targetY) 
+void oldMoveToPoint(double targetX, double targetY) 
 {
     while (true) 
     {
@@ -200,5 +200,64 @@ void moveToPoint(double targetX, double targetY)
     // Stop motors
     leftMotor.move_voltage(0);
     rightMotor.move_voltage(0);
+}
+
+void moveToPoint(double targetX, double targetY) 
+{
+    // PID constants
+    const double kP_linear = 1.0;
+    const double kD_linear = 0.5;
+    const double kP_angular = 3.0;
+
+    // Control loop settings
+    const double distance_tolerance = 1.0; // inches
+    const int loop_delay = 10;
+
+    double prev_error = 0;
+
+    while (true) {
+        // Calculate distance to target
+        double dx = targetX - pos_x;
+        double dy = targetY - pos_y;
+
+        // Distance and angle to target
+        double distance = sqrt(dx * dx + dy * dy);
+        double targetAngle = atan2(dy, dx);
+        double angle_error = targetAngle - heading;
+
+        // Normalize angle to -π, π
+        while (angle_error > M_PI) angle_error -= 2 * M_PI;
+        while (angle_error < -M_PI) angle_error += 2 * M_PI;
+
+        // Stop condition
+        if (distance < distance_tolerance)
+            break;
+
+        // Linear velocity with basic PD
+        double error_derivative = (distance - prev_error) / (loop_delay / 1000.0);
+        double linear_speed = kP_linear * distance + kD_linear * error_derivative;
+
+        // Angular velocity (P only)
+        double angular_speed = kP_angular * angle_error;
+
+        // Convert to left/right motor speeds (arcade-style drive)
+        double left_power = linear_speed - angular_speed;
+        double right_power = linear_speed + angular_speed;
+
+        // Clamp speeds
+        left_power = std::fmax(std::fmin(left_power, maxSpeed), -maxSpeed);
+        right_power = std::fmax(std::fmin(right_power, maxSpeed), -maxSpeed);
+
+        leftMotor.move(left_power);
+        rightMotor.move(right_power);
+
+        prev_error = distance;
+
+        pros::delay(loop_delay);
+    }
+
+    // Stop motors
+    leftMotor.brake();
+    rightMotor.brake();
 }
 
