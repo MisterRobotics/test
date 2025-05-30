@@ -19,10 +19,11 @@ pros::Motor rightMotor(-10, pros::MotorGearset::green);
 //pros::MotorGroup right_drive({7,8,9}, pros::MotorGearset::blue);
 
 //move to pose pure pursuit limits
-const double lookaheadDistance = 6.0; // inches
-const double maxSpeed = 115.0;        // percent voltage
-const double kTurn = 1.5;             // heading correction gain
-const double posTolerance = 0.5;      // position tolerance in inches
+const float lookaheadDistance = 6.0; // inches
+const float maxSpeed = 115.0;        // percent voltage
+const float kTurn = 1.5;             // heading correction gain
+const float kDrive = 50;
+const float posTolerance = 0.5;      // position tolerance in inches
 
 
 //Speical functions
@@ -171,25 +172,35 @@ void moveToPoint(float targetX, float targetY)
 {
     while(true)
     {
-        //calculate distance to target
-        double xDistance = targetX - pos_x;
-        double yDistance = targetY - pos_y;
-        double disToTarget = distance(pos_x, pos_y, targetX, targetY);
+        while (true) 
+        {
+            // Distance and direction to target
+            double dx = targetX - pos_x;
+            double dy = targetY - pos_y;
+            double distToTarget = distance(pos_x, pos_y, targetX, targetY);
+            
+            if (distToTarget < posTolerance) break;
 
-        //stop if within tolerance
-        if(disToTarget < posTolerance) 
-            break;
-        
+            // Angle to target
+            double targetAngle = atan2(dy, dx);
 
-        //calculate movement speed
-        double fowardSpeed = clamp(disToTarget * 10, -maxSpeed, maxSpeed);
+            // Heading error (normalize to -pi to pi)
+            double headingError = targetAngle - heading;
+            while (headingError > M_PI) headingError -= 2 * M_PI;
+            while (headingError < -M_PI) headingError += 2 * M_PI;
 
+            // Drive and turn power
+            double drivePower = clamp(distToTarget * kDrive, -maxSpeed, maxSpeed);
+            double turnPower = clamp(headingError * kTurn * 100, -maxSpeed, maxSpeed);
 
-        //move motors, extra 120 mutliplier to account for turning values being small due to being in radians
-        leftMotor.move(fowardSpeed * 120);
-        rightMotor.move(fowardSpeed * 120);
+            double leftPower = drivePower - turnPower;
+            double rightPower = drivePower + turnPower;
 
-        pros::delay(10);
+            leftMotor.move_voltage(leftPower / 100.0 * 12000);
+            rightMotor.move_voltage(rightPower / 100.0 * 12000);
+
+            pros::delay(10);
+        }
     }
 
     leftMotor.move_voltage(0);
