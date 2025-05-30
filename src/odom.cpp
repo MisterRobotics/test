@@ -23,7 +23,7 @@ const float lookaheadDistance = 6.0; // inches
 const float maxSpeed = 115.0;        // percent voltage
 const float kTurn = 1.5;             // heading correction gain
 const float kDrive = 50;
-const float posTolerance = 0.5;      // position tolerance in inches
+const float posTolerance = 1;      // position tolerance in inches
 
 
 //Speical functions
@@ -168,41 +168,37 @@ void moveToPose(float targetX, float targetY, float targetHeading)
     rightMotor.move_voltage(0);
 }
 
-void moveToPoint(float targetX, float targetY)
+void moveToPoint(double targetX, double targetY) 
 {
-    while(true)
+    while (true) 
     {
-        while (true) 
-        {
-            // Distance and direction to target
-            double dx = targetX - pos_x;
-            double dy = targetY - pos_y;
-            double distToTarget = distance(pos_x, pos_y, targetX, targetY);
-            
-            if (distToTarget < posTolerance) break;
+        double dx = targetX - pos_x;
+        double dy = targetY - pos_y;
+        double dist = sqrt(dx * dx + dy * dy);
+        if (dist < posTolerance) break;
 
-            // Angle to target
-            double targetAngle = atan2(dy, dx);
+        double targetAngle = atan2(dy, dx);
+        double angleError = targetAngle - heading;
 
-            // Heading error (normalize to -pi to pi)
-            double headingError = targetAngle - heading;
-            while (headingError > M_PI) headingError -= 2 * M_PI;
-            while (headingError < -M_PI) headingError += 2 * M_PI;
+        // Normalize angle to -pi to pi
+        while (angleError > M_PI) angleError -= 2 * M_PI;
+        while (angleError < -M_PI) angleError += 2 * M_PI;
 
-            // Drive and turn power
-            double drivePower = clamp(distToTarget * kDrive, -maxSpeed, maxSpeed);
-            double turnPower = clamp(headingError * kTurn * 100, -maxSpeed, maxSpeed);
+        // Drive forward in the direction of the target
+        double forwardPower = clamp(dist * kDrive, -maxSpeed, maxSpeed);
+        double turnPower = clamp(angleError * kTurn * 100, -maxSpeed, maxSpeed);
 
-            double leftPower = drivePower - turnPower;
-            double rightPower = drivePower + turnPower;
+        double leftPower = forwardPower - turnPower;
+        double rightPower = forwardPower + turnPower;
 
-            leftMotor.move_voltage(leftPower / 100.0 * 12000);
-            rightMotor.move_voltage(rightPower / 100.0 * 12000);
+        leftMotor.move_voltage(clamp(leftPower, -maxSpeed, maxSpeed));
+        rightMotor.move_voltage(clamp(rightPower, -maxSpeed, maxSpeed));
 
-            pros::delay(10);
-        }
+        pros::delay(10);
     }
 
+    // Stop motors
     leftMotor.move_voltage(0);
     rightMotor.move_voltage(0);
 }
+

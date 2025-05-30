@@ -76,7 +76,6 @@ void opcontrol()
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2))
 		{
 			moveToPoint(124, 40);
-			turnToHeading(1.5708);
 		}
 		pros::delay(10);
 	}
