@@ -82,7 +82,7 @@ void opcontrol()
 		}
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2))
 		{
-			moveToPoint(126, 50);
+			moveToPose(126, 50, 1);
 		}
 		pros::delay(10);
 	}

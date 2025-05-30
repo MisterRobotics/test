@@ -205,7 +205,7 @@ void oldMoveToPoint(double targetX, double targetY)
 void moveToPoint(double targetX, double targetY) 
 {
     // PID constants
-    const double kP_linear = 1.0;
+    const double kP_linear = 50;
     const double kD_linear = 0.5;
     const double kP_angular = 3.0;
 
