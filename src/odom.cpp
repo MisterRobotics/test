@@ -25,6 +25,9 @@ const float kTurn = 1.5;             // heading correction gain
 const float kDrive = 50;
 const float posTolerance = 1;      // position tolerance in inches
 
+bool rightDist = true;
+bool frontDist = false;
+
 
 //Speical functions
 double clamp(double value, double minValue, double maxValue)
@@ -54,18 +57,32 @@ void odomInit()
 
 void odomUpdate() 
 {
-  // et robot heading in radians from inertial sesnor
-  heading = imu.get_heading() * (M_PI / 180.0);
+    // et robot heading in radians from inertial sesnor
+    heading = imu.get_heading() * (M_PI / 180.0);
 
-  // Convert sensor readings to inches (from mm)
-  double right_dist = dist_right.get() / 25.4;
-  double back_dist = dist_back.get() / 25.4;
+    // Convert sensor readings to inches (from mm)
+    double right_dist = dist_right.get() / 25.4;
+    double back_dist = dist_back.get() / 25.4;
 
-  // Get X pose
-  pos_x = 144.0 - (right_dist + x_offset * cos(heading));
+    // Get X pose
+    if(rightDist = true)
+    {
+        pos_x = 144.0 - (right_dist + x_offset * cos(heading));
+    }
+    else if(rightDist = false)
+    {
+        pos_x = right_dist + x_offset * cos(heading);
+    }
 
-  // Back wall is at Y = 0, so add distance from back wall
-  pos_y = back_dist + y_offset * sin(heading);
+    //get y choord
+    if(frontDist = true)
+    {
+        pos_y = 144 - (back_dist + y_offset * sin(heading));
+    }
+    else if(frontDist = false)
+    {
+        pos_y = back_dist + y_offset * sin(heading);
+    }
 
 }
 
