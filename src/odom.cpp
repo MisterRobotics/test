@@ -140,8 +140,8 @@ void moveToPose(float targetX, float targetY, float targetHeading)
         double turnSpeed = clamp(angleToTarget * kTurn * 100, -maxSpeed, maxSpeed);
 
         //calculate drive power
-        double leftPower = fowardSpeed - turnSpeed;
-        double rightPower = fowardSpeed + turnSpeed;
+        double leftPower = fowardSpeed + turnSpeed;
+        double rightPower = fowardSpeed - turnSpeed;
 
         //move motors, extra 120 mutliplier to account for turning values being small due to being in radians
         leftMotor.move(leftPower * 120);
@@ -215,7 +215,8 @@ void moveToPoint(double targetX, double targetY)
 
     double prev_error = 0;
 
-    while (true) {
+    while (true) 
+    {
         // Calculate distance to target
         double dx = targetX - pos_x;
         double dy = targetY - pos_y;
@@ -259,5 +260,40 @@ void moveToPoint(double targetX, double targetY)
     // Stop motors
     leftMotor.brake();
     rightMotor.brake();
+}
+
+void curveToPose(float targetX, float targetY, float targetHeading,float arcDialation)
+{
+    // PID constants
+    const double kP_linear = 50;
+    const double kD_linear = 0.5;
+    const double kP_angular = 3.0;
+
+    // Control loop settings
+    const double distance_tolerance = 1.0; // inches
+    const int loop_delay = 10;
+
+    double prev_error = 0;
+
+    while(true)
+    {
+        // Calculate distance to target
+        double dx = targetX - pos_x;
+        double dy = targetY - pos_y;
+
+        // Distance and angle to target
+        double distance = sqrt(dx * dx + dy * dy);
+        double targetAngle = atan2(dy, dx);
+        double angle_error = targetAngle - heading;
+
+        // Normalize angle to -π, π
+        while (angle_error > M_PI) angle_error -= 2 * M_PI;
+        while (angle_error < -M_PI) angle_error += 2 * M_PI;
+
+        // Stop condition
+        if (distance < distance_tolerance)
+            break;
+        //
+    }
 }
 
