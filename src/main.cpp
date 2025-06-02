@@ -8,6 +8,7 @@ int auton = 0;
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({14,15,16}, pros::MotorGearset::blue);
 pros::MotorGroup rightDrive({-11,-12,-13}, pros::MotorGearset::blue);
+pros::Motor intake(-8, pros::MotorGearset::blue);
 
 
 
@@ -85,14 +86,23 @@ void opcontrol()
         rightDrive.move(rightY - rightX);
 
 		
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1))
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1))
 		{
 			turnToHeading(1.5708);
 		}
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2))
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2))
 		{
 			moveToPose(126, 50, 1);
 		}
+
+		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+			intake.move(127);
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+			intake.move(-127);
+		else
+			intake.move(0);
+		
+		//delay to not overload CPU
 		pros::delay(10);
 	}
 }
