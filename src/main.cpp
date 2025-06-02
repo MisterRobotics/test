@@ -97,7 +97,7 @@ void opcontrol()
 
 		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
 			intake.move(127);
-		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
 			intake.move(-127);
 		else
 			intake.move(0);
