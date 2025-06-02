@@ -51,6 +51,35 @@ double pos_x = 7.5; // robots X position on the field
 double pos_y = 4; // robots Y position on the field
 double heading = 0.0; // robots heading in radians
 
+bool robotIsMoving() 
+{
+    //make previous values
+    static double lastX = 0.0;
+    static double lastY = 0.0;
+    static double last_heading = 0.0;
+    static uint32_t last_time = pros::millis();
+
+    //fetched change in position
+    double dx = pos_x - lastX;
+    double dy = pos_y - lastY;
+    double d_heading = fabs(imu.get_rotation() - last_heading);
+
+    uint32_t current_time = pros::millis();
+    double dt = (current_time - last_time) / 1000.0;
+
+    lastX = pos_x;
+    lastY = pos_y;
+    last_heading = imu.get_rotation();
+    last_time = current_time;
+
+    double linear_speed = sqrt(dx * dx + dy * dy) / dt;
+    double angular_speed = d_heading / dt;
+
+    // Thresholds (tune as needed)
+    return (linear_speed > 1.0 || angular_speed > 1.0); // units: mm/s or deg/s
+}
+
+
 void odomInit() 
 {
     //calibrate inertial sensor before running odom
@@ -60,6 +89,9 @@ void odomInit()
 
 void odomUpdate() 
 {
+    if (!robotIsMoving()) 
+        return;
+
     // et robot heading in radians from inertial sesnor
     heading = imu.get_heading() * (M_PI / 180.0);
 
@@ -68,38 +100,13 @@ void odomUpdate()
     double back_dist = dist_back.get() / 25.4;
 
     // Get X pose
-    if(rightDist = true)
-    {
-        prevX = pos_x;
-        pos_x = 144.0 - (right_dist + x_offset * cos(heading));
-    }
-    else if(rightDist = false)
-    {
-        prevX = pos_x;
-        pos_x = right_dist + x_offset * cos(heading);
-    }
+    prevX = pos_x;
+    pos_x = 144.0 - (right_dist + x_offset * cos(heading));
+    
 
     //get y choord
-    if(frontDist = true)
-    {
-        prevY = pos_y;
-        pos_y = 144 - (back_dist + y_offset * sin(heading));
-    }
-    else if(frontDist = false)
-    {
-        prevY = pos_y;
-        pos_y = back_dist + y_offset * sin(heading);
-    }
-
-    //check if robot is moving towrds
-    if(prevX != pos_x && leftMotor.get_actual_velocity() < 1)
-    {
-        rightDist = !rightDist;
-    }
-    if(prevY != pos_y && leftMotor.get_actual_velocity() < 1)
-    {
-        frontDist = !frontDist;
-    }
+    prevY = pos_y;
+    pos_y = back_dist + y_offset * sin(heading);
 
 }
 
