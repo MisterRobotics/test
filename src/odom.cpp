@@ -61,7 +61,7 @@ void odomUpdate()
   double right_dist = dist_right.get() / 25.4;
   double back_dist = dist_back.get() / 25.4;
 
-  // Right wall is at X = 144, so subtract from that
+  // Get X pose
   pos_x = 144.0 - (right_dist + x_offset * cos(heading));
 
   // Back wall is at Y = 0, so add distance from back wall
