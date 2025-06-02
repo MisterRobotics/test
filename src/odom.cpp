@@ -28,6 +28,9 @@ const float posTolerance = 1;      // position tolerance in inches
 bool rightDist = true;
 bool frontDist = false;
 
+double prevX;
+double prevY;
+
 
 //Speical functions
 double clamp(double value, double minValue, double maxValue)
@@ -67,21 +70,35 @@ void odomUpdate()
     // Get X pose
     if(rightDist = true)
     {
+        prevX = pos_x;
         pos_x = 144.0 - (right_dist + x_offset * cos(heading));
     }
     else if(rightDist = false)
     {
+        prevX = pos_x;
         pos_x = right_dist + x_offset * cos(heading);
     }
 
     //get y choord
     if(frontDist = true)
     {
+        prevY = pos_y;
         pos_y = 144 - (back_dist + y_offset * sin(heading));
     }
     else if(frontDist = false)
     {
+        prevY = pos_y;
         pos_y = back_dist + y_offset * sin(heading);
+    }
+
+    //check if robot is moving towrds
+    if(prevX != pos_x && leftMotor.get_actual_velocity() < 1)
+    {
+        rightDist = !rightDist;
+    }
+    if(prevY != pos_y && leftMotor.get_actual_velocity() < 1)
+    {
+        frontDist = !frontDist;
     }
 
 }
