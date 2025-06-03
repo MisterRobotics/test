@@ -273,10 +273,13 @@ void moveToPoint(double targetX, double targetY)
 
         // Stop condition
         if (distance < distance_tolerance)
+        {
             break;
+        }
+
 
         // Linear velocity with basic PD
-        double error_derivative = (distance - prev_error) / (10 / 1000.0);
+        double error_derivative = (distance - prev_error) / (0.01);
         double linear_speed = kP_linear * distance + kD_linear * error_derivative;
 
         // Angular velocity (P only)
@@ -299,8 +302,9 @@ void moveToPoint(double targetX, double targetY)
     }
 
     // Stop motors
-    leftMotor.brake();
-    rightMotor.brake();
+    leftMotor.move(0);
+    rightMotor.move(0);
+    return;
 }
 
 void curveToPose(float targetX, float targetY, float targetHeading,float arcDialation)
