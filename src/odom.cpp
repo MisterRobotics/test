@@ -246,13 +246,15 @@ void oldMoveToPoint(double targetX, double targetY)
 
 void moveToPoint(double targetX, double targetY) 
 {
-    // PID constants
+    //PID constants
     const double kP_linear = 25;
     const double kD_linear = 2;
     const double kP_angular = 3.0;
 
-    // Control loop settings
-    const double distance_tolerance = 1.0; // inches
+    // Control loop settings (inches)
+    const double distance_tolerance = 1.0; 
+    const double max_linear_speed = 120;    // Tune to your robot
+    const double max_angular_speed = 85;
 
     double prev_error = 0;
 
@@ -281,9 +283,13 @@ void moveToPoint(double targetX, double targetY)
         // Linear velocity with basic PD
         double error_derivative = (distance - prev_error) / (0.01);
         double linear_speed = kP_linear * distance + kD_linear * error_derivative;
+        linear_speed = std::fmin(std::fmax(linear_speed, -max_linear_speed), max_linear_speed);
 
-        // Angular velocity (P only)
+
+        // Angular velocity basic P
         double angular_speed = kP_angular * angle_error;
+        angular_speed = std::fmin(std::fmax(angular_speed, -max_angular_speed), max_angular_speed);
+
 
         // Convert to left/right motor speeds (arcade-style drive)
         double left_power = linear_speed - angular_speed;
@@ -297,7 +303,6 @@ void moveToPoint(double targetX, double targetY)
         rightMotor.move(right_power);
 
         prev_error = distance;
-
         pros::delay(10);
     }
 
