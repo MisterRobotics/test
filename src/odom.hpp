@@ -11,5 +11,6 @@ void coordinatePrint();
 
 //movement functions
 void moveToPoint(double targetX, double targetY);
+void oldMoveToPoint(double targetX, double targetY);
 void turnToHeading(double targetAngle);
 void moveToPose(float targetX, float targetY, float targetHeading);

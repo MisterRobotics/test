@@ -92,7 +92,8 @@ void opcontrol()
 		}
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2))
 		{
-			moveToPose(126, 50, 1);
+			//moveToPose(121, 28, 5.75);
+			oldMoveToPoint(132, 43);
 		}
 
 		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))

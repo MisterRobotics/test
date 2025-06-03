@@ -157,6 +157,21 @@ void turnToHeading(double targetAngle)
 //move to pose fuctions: moves to a point and heading
 void moveToPose(float targetX, float targetY, float targetHeading)
 {
+    //turn to heading first
+    double finalError = targetHeading - heading;
+    while (finalError > M_PI) finalError -= 2 * M_PI;
+    while (finalError < -M_PI) finalError += 2 * M_PI;
+
+    while (fabs(finalError) > 0.05) 
+    {
+        double turnPower = clamp(finalError * kTurn * 100, -maxSpeed, maxSpeed);
+        leftMotor.move_voltage(-turnPower / 100.0 * 12000);
+        rightMotor.move_voltage(turnPower / 100.0 * 12000);
+
+        pros::delay(10);
+        finalError = targetHeading - heading;
+    }
+
     while(true)
     {
         //calculate distance to target
@@ -189,20 +204,6 @@ void moveToPose(float targetX, float targetY, float targetHeading)
         rightMotor.move(rightPower * 120);
 
         pros::delay(10);
-    }
-
-    //final heading corrections
-    double finalError = targetHeading - heading;
-    while (finalError > M_PI) finalError -= 2 * M_PI;
-    while (finalError < -M_PI) finalError += 2 * M_PI;
-
-    while (fabs(finalError) > 0.05) {
-        double turnPower = clamp(finalError * kTurn * 100, -maxSpeed, maxSpeed);
-        leftMotor.move_voltage(-turnPower / 100.0 * 12000);
-        rightMotor.move_voltage(turnPower / 100.0 * 12000);
-
-        pros::delay(10);
-        finalError = targetHeading - heading;
     }
 
     leftMotor.move_voltage(0);
@@ -246,13 +247,12 @@ void oldMoveToPoint(double targetX, double targetY)
 void moveToPoint(double targetX, double targetY) 
 {
     // PID constants
-    const double kP_linear = 50;
-    const double kD_linear = 0.5;
+    const double kP_linear = 25;
+    const double kD_linear = 2;
     const double kP_angular = 3.0;
 
     // Control loop settings
     const double distance_tolerance = 1.0; // inches
-    const int loop_delay = 10;
 
     double prev_error = 0;
 
@@ -276,7 +276,7 @@ void moveToPoint(double targetX, double targetY)
             break;
 
         // Linear velocity with basic PD
-        double error_derivative = (distance - prev_error) / (loop_delay / 1000.0);
+        double error_derivative = (distance - prev_error) / (10 / 1000.0);
         double linear_speed = kP_linear * distance + kD_linear * error_derivative;
 
         // Angular velocity (P only)
@@ -295,7 +295,7 @@ void moveToPoint(double targetX, double targetY)
 
         prev_error = distance;
 
-        pros::delay(loop_delay);
+        pros::delay(10);
     }
 
     // Stop motors
