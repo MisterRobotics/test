@@ -24,6 +24,7 @@ const float maxSpeed = 115.0;        // percent voltage
 const float kTurn = 1.5;             // heading correction gain
 const float kDrive = 50;
 const float posTolerance = 1;      // position tolerance in inches
+const float wheelBase = 11;
 
 bool rightDist = true;
 bool frontDist = false;
@@ -155,60 +156,76 @@ void turnToHeading(double targetAngle)
 }
 
 //move to pose fuctions: moves to a point and heading
-void moveToPose(float targetX, float targetY, float targetHeading)
+void moveToPose(double targetX, double targetY, double targetHeading, double radius, double speed, bool clockwise = true) 
 {
-    //turn to heading first
-    double finalError = targetHeading - heading;
-    while (finalError > M_PI) finalError -= 2 * M_PI;
-    while (finalError < -M_PI) finalError += 2 * M_PI;
+    // Get the vector from robot to target
+    double dx = targetX - pos_x;
+    double dy = targetY - pos_y;
 
-    while (fabs(finalError) > 0.05) 
-    {
-        double turnPower = clamp(finalError * kTurn * 100, -maxSpeed, maxSpeed);
-        leftMotor.move_voltage(-turnPower / 100.0 * 12000);
-        rightMotor.move_voltage(turnPower / 100.0 * 12000);
+    // Distance from robot to target
+    double chordLength = sqrt(dx * dx + dy * dy);
+
+    // Angle swept along the arc
+    double angle_sweep = 2 * asin(chordLength / (2 * radius));
+
+    // Normalize direction
+    if (!clockwise) 
+        angle_sweep = -angle_sweep;
+
+    // Midpoint angle from robot to arc center
+    double headingOffset = clockwise ? M_PI_2 : -M_PI_2;
+
+    // Get arc center position
+    double cx = pos_x + radius * cos(heading + headingOffset);
+    double cy = pos_y + radius * sin(heading + headingOffset);
+
+    // Starting angle from arc center to robot
+    double startAngle = atan2(pos_y - cy, pos_x - cx);
+    double currentAngle = startAngle;
+
+    double targetAngle = startAngle + angle_sweep;
+
+    // Keep turning along arc until the current angle reaches the target angle
+    while (true) {
+        // Update odometry
+        double robotX = pos_x;
+        double robotY = pos_y;
+
+        currentAngle = atan2(robotY - cy, robotX - cx);
+
+        // Check if the angle swept is complete
+        double angleDelta = targetAngle - currentAngle;
+
+        // Normalize
+        while (angleDelta > M_PI) angleDelta -= 2 * M_PI;
+        while (angleDelta < -M_PI) angleDelta += 2 * M_PI;
+
+        if (fabs(angleDelta) < 0.05) break;
+
+        // Turn rate is proportional to arc radius
+        double leftSpeed = clockwise ? speed : speed * (radius - wheelBase / 2) / (radius + wheelBase / 2);
+        double rightSpeed = clockwise ? speed * (radius + wheelBase / 2) / (radius - wheelBase / 2) : speed;
+
+        // Clamp to max
+        leftSpeed = std::fmax(std::fmin(leftSpeed, 127), -127);
+        rightSpeed = std::fmax(std::fmin(rightSpeed, 127), -127);
+
+        leftMotor.move(leftSpeed);
+        rightMotor.move(rightSpeed);
 
         pros::delay(10);
-        finalError = targetHeading - heading;
     }
 
-    while(true)
-    {
-        //calculate distance to target
-        double xDistance = targetX - pos_x;
-        double yDistance = targetY - pos_y;
-        double disToTarget = distance(pos_x, pos_y, targetX, targetY);
+    // Face target heading at the end
+    turnToHeading(targetHeading);
 
-        //stop if within tolerance
-        if(disToTarget < posTolerance) 
-            break;
-        
-        //calculate angle lookahead to point
-        double angleToTarget = atan2(yDistance, xDistance);
+    // Stop
+    leftMotor.move(0);
+    rightMotor.move(0);
 
-        //calculate angle to target (normalizes between -π and π)
-        double headingError = angleToTarget - heading;
-        while (headingError > M_PI) headingError -= 2 * M_PI;
-        while (headingError < -M_PI) headingError += 2 * M_PI;
-
-        //calculate movement speed
-        double fowardSpeed = clamp(disToTarget * 10, -maxSpeed, maxSpeed);
-        double turnSpeed = clamp(angleToTarget * kTurn * 100, -maxSpeed, maxSpeed);
-
-        //calculate drive power
-        double leftPower = fowardSpeed + turnSpeed;
-        double rightPower = fowardSpeed - turnSpeed;
-
-        //move motors, extra 120 mutliplier to account for turning values being small due to being in radians
-        leftMotor.move(leftPower * 120);
-        rightMotor.move(rightPower * 120);
-
-        pros::delay(10);
-    }
-
-    leftMotor.move_voltage(0);
-    rightMotor.move_voltage(0);
+    return;
 }
+
 
 void oldMoveToPoint(double targetX, double targetY) 
 {
@@ -247,8 +264,8 @@ void oldMoveToPoint(double targetX, double targetY)
 void moveToPoint(double targetX, double targetY) 
 {
     //PID constants
-    const double kP_linear = 25;
-    const double kD_linear = 2;
+    const double kP_linear = 10;
+    const double kD_linear = 0.5;
     const double kP_angular = 3.0;
 
     // Control loop settings (inches)

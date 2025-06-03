@@ -92,7 +92,7 @@ void opcontrol()
 		}
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2))
 		{
-			moveToPose(121, 28, 5.75);
+			moveToPose(121, 28, 5.75, 15, 100, false);
 			//moveToPoint(128, 44);
 			master.rumble(". - . -");
 		}
