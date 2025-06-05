@@ -80,6 +80,12 @@ bool robotIsMoving()
     return (linear_speed > 1.0 || angular_speed > 1.0); // units: mm/s or deg/s
 }
 
+void setDrive(double leftSpeed, double rightSpeed)
+{
+    leftMotor.move(leftSpeed);
+    rightMotor.move(rightSpeed);
+}
+
 
 void odomInit() 
 {
@@ -102,12 +108,12 @@ void odomUpdate()
 
     // Get X pose
     prevX = pos_x;
-    pos_x = 144.0 - (right_dist + x_offset * cos(heading));
+    pos_x = 144.0 - (right_dist + x_offset); /*cos(heading)*/
     
 
     //get y choord
     prevY = pos_y;
-    pos_y = back_dist + y_offset * sin(heading);
+    pos_y = back_dist + y_offset; /*sin(heading)*/
 
 }
 
@@ -136,7 +142,7 @@ void driveRobot(float left, float right)
 void turnToHeading(double targetAngle)
 {
     //Creat P loop for turning, tolerance so that robot doesn't wobble trying to hit exact angle
-    const float kP = 100;
+    const float kP = 50;
     const float tolerance = 0.025;
 
     //Turn robot to reach target
@@ -153,77 +159,63 @@ void turnToHeading(double targetAngle)
     }
 
     driveRobot(0,0);
+    return;
 }
 
-//move to pose fuctions: moves to a point and heading
-void moveToPose(double targetX, double targetY, double targetHeading, double radius, double speed, bool clockwise = true) 
+void moveToPose(double targetX, double targetY, double targetHeading, double lookaheadDist, double maxSpeed, bool clockwise = true) 
 {
-    // Get the vector from robot to target
-    double dx = targetX - pos_x;
-    double dy = targetY - pos_y;
+    const double positionThreshold = 1.5; // inches
+    const double headingThreshold = 0.05; // radians (~2.8 deg)
+    const double kP_turn = 12;           // proportional gain for heading
+    const double kP_drive = 8;          // gain for drive speed
 
-    // Distance from robot to target
-    double chordLength = sqrt(dx * dx + dy * dy);
-
-    // Angle swept along the arc
-    double angle_sweep = 2 * asin(chordLength / (2 * radius));
-
-    // Normalize direction
-    if (!clockwise) 
-        angle_sweep = -angle_sweep;
-
-    // Midpoint angle from robot to arc center
-    double headingOffset = clockwise ? M_PI_2 : -M_PI_2;
-
-    // Get arc center position
-    double cx = pos_x + radius * cos(heading + headingOffset);
-    double cy = pos_y + radius * sin(heading + headingOffset);
-
-    // Starting angle from arc center to robot
-    double startAngle = atan2(pos_y - cy, pos_x - cx);
-    double currentAngle = startAngle;
-
-    double targetAngle = startAngle + angle_sweep;
-
-    // Keep turning along arc until the current angle reaches the target angle
     while (true) {
-        // Update odometry
-        double robotX = pos_x;
-        double robotY = pos_y;
+        // Get current robot pose
+        double x = pos_x; // current X in inches
+        double y = pos_y; // current Y in inches
+        double heading = heading; // current heading in radians
 
-        currentAngle = atan2(robotY - cy, robotX - cx);
+        // Calculate vector to target
+        double dx = targetX - x;
+        double dy = targetY - y;
+        double distToTarget = std::sqrt(dx * dx + dy * dy);
 
-        // Check if the angle swept is complete
-        double angleDelta = targetAngle - currentAngle;
+        // Check if we're close enough to the target position
+        if (distToTarget < positionThreshold) {
+            // Now focus on final heading
+            double headingError = targetHeading - heading;
+            while (headingError > M_PI) headingError -= 2 * M_PI;
+            while (headingError < -M_PI) headingError += 2 * M_PI;
 
-        // Normalize
-        while (angleDelta > M_PI) angleDelta -= 2 * M_PI;
-        while (angleDelta < -M_PI) angleDelta += 2 * M_PI;
+            // Done if within heading threshold
+            if (std::fabs(headingError) < headingThreshold) {
+                setDrive(0, 0); // full stop
+                return; // exit the function cleanly
+            }
 
-        if (fabs(angleDelta) < 0.05) break;
+            // Turn in place to final heading
+            double turnSpeed = clamp(kP_turn * headingError, -maxSpeed, maxSpeed);
+            setDrive(0, turnSpeed);
+            pros::delay(10);
+            continue;
+        }
 
-        // Turn rate is proportional to arc radius
-        double leftSpeed = clockwise ? speed : speed * (radius - wheelBase / 2) / (radius + wheelBase / 2);
-        double rightSpeed = clockwise ? speed * (radius + wheelBase / 2) / (radius - wheelBase / 2) : speed;
+        // Compute angle to target
+        double angleToTarget = std::atan2(dy, dx);
+        double angleError = angleToTarget - heading;
+        while (angleError > M_PI) angleError -= 2 * M_PI;
+        while (angleError < -M_PI) angleError += 2 * M_PI;
 
-        // Clamp to max
-        leftSpeed = std::fmax(std::fmin(leftSpeed, 127), -127);
-        rightSpeed = std::fmax(std::fmin(rightSpeed, 127), -127);
+        // Compute drive and turn components
+        double forward = clamp(kP_drive * distToTarget, -maxSpeed, maxSpeed);
+        double turn = clamp(kP_turn * angleError, -maxSpeed, maxSpeed);
 
-        leftMotor.move(leftSpeed);
-        rightMotor.move(rightSpeed);
+        // Reduce forward speed if turning a lot
+        if (std::fabs(angleError) > 1.0) forward *= 0.5;
 
+        setDrive(forward, turn);
         pros::delay(10);
     }
-
-    // Face target heading at the end
-    turnToHeading(targetHeading);
-
-    // Stop
-    leftMotor.move(0);
-    rightMotor.move(0);
-
-    return;
 }
 
 
