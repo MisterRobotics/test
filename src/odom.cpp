@@ -166,7 +166,7 @@ void moveOneAxis(float targetY)
 {
     const float kP = 10;
     const float kD = 0.5;
-    const float tolerance = 0.5;
+    const float tolerance = 0.625;
 
     double prevError = 0;
 
