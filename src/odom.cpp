@@ -162,32 +162,38 @@ void turnToHeading(double targetAngle)
     return;
 }
 
-void moveOneAxis(float targetY)
+void moveOneAxis(float targetY) 
 {
-    const float kP = 50;
+    const float kP = 10;
+    const float kD = 0.5;
     const float tolerance = 0.5;
 
     double prevError = 0;
 
-    while(true)
+    while (true) 
     {
-        //calculate distance to pos
+        // calculate error
         double error = targetY - pos_y;
 
-        //stop condition
-        if(fabs(error) < tolerance)
-        {
+        // stop condition
+        if (fabs(error) < tolerance) {
             break;
         }
 
-        double motorPower = kP * error;
-        driveRobot(motorPower, -motorPower);
+        // derivative term to reduce overshoot/wobble
+        double derivative = (error - prevError) / 0.01; // since delay is 10ms
+        prevError = error;
+
+        double motorPower = (kP * error) + (kD * derivative);
+        motorPower = std::clamp(motorPower, -127.0, 127.0); // clamp motor power
+
+        // drive both sides forward with same power
+        driveRobot(motorPower, motorPower);
 
         pros::delay(10);
     }
 
-    driveRobot(0,0);
-    return;
+    driveRobot(0, 0); // full stop
 }
 
 void moveToPose(double targetX, double targetY, double targetHeading, double lookaheadDist, double maxSpeed, bool clockwise = true) 
