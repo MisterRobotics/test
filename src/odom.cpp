@@ -142,8 +142,8 @@ void driveRobot(float left, float right)
 void turnToHeading(double targetAngle)
 {
     //Creat P loop for turning, tolerance so that robot doesn't wobble trying to hit exact angle
-    const float kP = 50;
-    const float tolerance = 0.025;
+    const float kP = 105;
+    const float tolerance = 0.05;
 
     //Turn robot to reach target
     while(true)
@@ -155,6 +155,34 @@ void turnToHeading(double targetAngle)
         
         double motorPower = kP * error; //motor moving speed equals the kP times how far from target angle is
         driveRobot(motorPower, -motorPower); //move robot
+        pros::delay(10);
+    }
+
+    driveRobot(0,0);
+    return;
+}
+
+void moveOneAxis(float targetY)
+{
+    const float kP = 50;
+    const float tolerance = 0.5;
+
+    double prevError = 0;
+
+    while(true)
+    {
+        //calculate distance to pos
+        double error = targetY - pos_y;
+
+        //stop condition
+        if(fabs(error) < tolerance)
+        {
+            break;
+        }
+
+        double motorPower = kP * error;
+        driveRobot(motorPower, -motorPower);
+
         pros::delay(10);
     }
 
