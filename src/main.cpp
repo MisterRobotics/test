@@ -4,11 +4,14 @@
 
 //variables
 int auton = 0;
+int intakeState = 0;
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({14,15,16}, pros::MotorGearset::blue);
 pros::MotorGroup rightDrive({-11,-12,-13}, pros::MotorGearset::blue);
-pros::Motor intake(-8, pros::MotorGearset::blue);
+pros::Motor intakeMid(8, pros::MotorGearset::blue);
+pros::Motor intakeTop(9, pros::MotorGearset::green);
+
 
 
 
@@ -86,23 +89,71 @@ void opcontrol()
         rightDrive.move(rightY - rightX);
 
 		
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1))
+		/*if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
 		{
 			turnToHeading(1.5708);
 		}
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2))
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
 		{
 			moveOneAxis(54);
 			//moveToPoint(128, 44);
 			master.rumble(". - . -");
+		}*/
+
+		//intake controls
+		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+		{
+			intakeState = 1;
+		}
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1))
+		{
+			intakeState = 3;
+		}
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2))
+		{
+			intakeState = 2;
+		}
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
+		{
+			intakeState = 4;
+		}
+		else
+		{
+			intakeState = 0;
 		}
 
-		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
-			intake.move(127);
-		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
-			intake.move(-127);
-		else
-			intake.move(0);
+		//intake movement
+		if(intakeState == 1)
+		{
+			//storage
+			intakeMid.move(127);
+		}
+		else if(intakeState == 2)
+		{
+			//middle goal score
+			intakeMid.move(127);
+			intakeTop.move(127);
+		}
+		else if(intakeState == 3)
+		{
+			//High score
+			intakeMid.move(127);
+			intakeTop.move(-127);
+		}
+		else if(intakeState == 4)
+		{
+			//outtake
+			intakeMid.move(-127);
+		}
+		else if(intakeState == 0)
+		{
+			intakeMid.move(0);
+			intakeTop.move(0);
+		}
+
+		pros::lcd::print(4, "intake state:%d", intakeState);
+
+		
 		
 		//delay to not overload CPU
 		pros::delay(10);
