@@ -1,16 +1,14 @@
 #include "main.h"
 #include "odom.hpp"
 #include "autons.hpp"
+#include "intake.hpp"
 
 //variables
 int auton = 0;
-int intakeState = 0;
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({14,15,16}, pros::MotorGearset::blue);
 pros::MotorGroup rightDrive({-11,-12,-13}, pros::MotorGearset::blue);
-pros::Motor intakeMid(8, pros::MotorGearset::blue);
-pros::Motor intakeTop(9, pros::MotorGearset::green);
 
 
 
@@ -22,6 +20,7 @@ void initialize()
 {
 	pros::lcd::initialize();
 	void odom_init();
+	pros::Task runIntake();
 	pros::Task coordPrintTask(coordinatePrint);
 	pros::Task updatePos([]
 	{
@@ -122,34 +121,6 @@ void opcontrol()
 			intakeState = 0;
 		}
 
-		//intake movement
-		if(intakeState == 1)
-		{
-			//storage
-			intakeMid.move(127);
-		}
-		else if(intakeState == 2)
-		{
-			//middle goal score
-			intakeMid.move(127);
-			intakeTop.move(127);
-		}
-		else if(intakeState == 3)
-		{
-			//High score
-			intakeMid.move(127);
-			intakeTop.move(-127);
-		}
-		else if(intakeState == 4)
-		{
-			//outtake
-			intakeMid.move(-127);
-		}
-		else if(intakeState == 0)
-		{
-			intakeMid.move(0);
-			intakeTop.move(0);
-		}
 
 		pros::lcd::print(4, "intake state:%d", intakeState);
 
