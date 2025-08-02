@@ -1,6 +1,7 @@
 #include "Record_Replay.hpp"
 #include "odom.hpp"
 #include "odom.cpp"
+#include "intake.hpp"
 #include "pros/misc.hpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
@@ -14,12 +15,17 @@
 #include <vector>
 #include <string>
 
+bool piston1State;
+bool piston2State;
 
 //what's recorded during recording sessions
 struct driveState
 {
     int leftDrivePower;
     int rightDrivePower;
+    int intakePower;
+    bool piston1State;
+    bool piston2State;
     double x;
     double y;
     double heading;
@@ -38,7 +44,7 @@ void startRecording(const char* filename)
         int leftPower = leftDrive.get_voltage();
         int rightPower = rightDrive.get_voltage();
 
-        driveLog.push_back({leftPower, rightPower, pos_x, pos_y, heading});
+        driveLog.push_back({leftPower, rightPower, intakeState, piston1State, piston2State,pos_x, pos_y, heading});
 
         pros::delay(20); // 50Hz
     }
