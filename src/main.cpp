@@ -7,8 +7,8 @@
 int auton = 0;
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup leftDrive({14,15,16}, pros::MotorGearset::blue);
-pros::MotorGroup rightDrive({-11,-12,-13}, pros::MotorGearset::blue);
+pros::MotorGroup leftDrive({14,15,-16}, pros::MotorGearset::blue);
+pros::MotorGroup rightDrive({-11,-12,13}, pros::MotorGearset::blue);
 
 
 

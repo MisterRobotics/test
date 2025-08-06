@@ -46,7 +46,7 @@ void startRecording(const char* filename)
 
         driveLog.push_back({leftPower, rightPower, intakeState, piston1State, piston2State,pos_x, pos_y, heading});
 
-        pros::delay(20); // 50Hz
+        pros::delay(15); 
     }
 
     FILE* file = fopen(filename, "w");
