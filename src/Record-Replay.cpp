@@ -1,7 +1,5 @@
 #include "Record_Replay.hpp"
 #include "odom.hpp"
-#include "odom.cpp"
-#include "intake.hpp"
 #include "pros/misc.hpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
@@ -15,6 +13,7 @@
 #include <vector>
 #include <string>
 
+/*
 bool piston1State;
 bool piston2State;
 
@@ -62,3 +61,4 @@ void startRecording(const char* filename)
         pros::lcd::print(0, "SD write failed!");
     }
 }
+    */

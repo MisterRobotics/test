@@ -15,8 +15,6 @@ pros::Imu imu(20);             //inertial sesnor, tracks heading
 
 pros::Motor leftMotor(1, pros::MotorGearset::green);
 pros::Motor rightMotor(-10, pros::MotorGearset::green);
-pros::MotorGroup leftDrive({14,15,16}, pros::MotorGearset::blue);
-pros::MotorGroup rightDrive({-11,-12,-13}, pros::MotorGearset::blue);
 //pros::MotorGroup left_drive({4,5,6}, pros::MotorGearset::blue);
 //pros::MotorGroup right_drive({7,8,9}, pros::MotorGearset::blue);
 

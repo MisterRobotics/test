@@ -1,18 +1,83 @@
 #include "main.h"
 #include "odom.hpp"
 #include "autons.hpp"
-#include "intake.hpp"
+
 
 //variables
 int auton = 0;
+int intakeState = 0;
+
+pros::Motor intakeMid(8, pros::MotorGearset::blue);
+pros::Motor intakeTop(9, pros::MotorGearset::green);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({14,15,-16}, pros::MotorGearset::blue);
-pros::MotorGroup rightDrive({-11,-12,13}, pros::MotorGearset::blue);
+pros::MotorGroup rightDrive({-17,-12,13}, pros::MotorGearset::blue);
 
 
 
+void intakeControl()
+{
+    while(true)
+    {
+        //intake movement
+        if(intakeState == 1)
+        {
+            //storage
+            intakeMid.move(127);
+        }
+        else if(intakeState == 2)
+        {
+            //middle goal score
+            intakeMid.move(127);
+            intakeTop.move(127);
+        }
+        else if(intakeState == 3)
+        {
+            //High score
+            intakeMid.move(127);
+            intakeTop.move(-127);
+        }
+        else if(intakeState == 4)
+        {
+            //outtake
+            intakeMid.move(-127);
+        }
+        else if(intakeState == 0)
+        {
+            intakeMid.move(0);
+            intakeTop.move(0);
+        }
+    }
+} 
 
+void driverIntake()
+{
+    //intake controls
+		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+		{
+			intakeState = 1;
+		}
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1))
+		{
+			intakeState = 3;
+		}
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2))
+		{
+			intakeState = 2;
+		}
+		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
+		{
+			intakeState = 4;
+		}
+		else
+		{
+			intakeState = 0;
+		}
+
+
+		pros::lcd::print(4, "intake state:%d", intakeState);
+}
 
 
 
@@ -20,13 +85,20 @@ void initialize()
 {
 	pros::lcd::initialize();
 	void odom_init();
-	pros::Task runIntake();
 	pros::Task coordPrintTask(coordinatePrint);
 	pros::Task updatePos([]
 	{
 		while(true)
 		{
 			odomUpdate();
+			pros::delay(10);
+		}
+	});
+	pros::Task runIntake([]
+	{
+		while(true)
+		{
+			intakeControl();
 			pros::delay(10);
 		}
 	});
@@ -87,7 +159,8 @@ void opcontrol()
         leftDrive.move(rightY + rightX);
         rightDrive.move(rightY - rightX);
 
-		
+		driverIntake();
+
 		/*if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
 		{
 			turnToHeading(1.5708);
@@ -99,30 +172,6 @@ void opcontrol()
 			master.rumble(". - . -");
 		}*/
 
-		//intake controls
-		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
-		{
-			intakeState = 1;
-		}
-		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L1))
-		{
-			intakeState = 3;
-		}
-		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_L2))
-		{
-			intakeState = 2;
-		}
-		else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
-		{
-			intakeState = 4;
-		}
-		else
-		{
-			intakeState = 0;
-		}
-
-
-		pros::lcd::print(4, "intake state:%d", intakeState);
 
 		
 		
