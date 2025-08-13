@@ -37,6 +37,48 @@ struct driveState
 
 std::vector<driveState> driveLog;
 
+void pistonControl()
+{
+	piston1.set_value(piston1State);
+	piston2.set_value(piston2State);
+}
+
+void intakeControl()
+{
+    while(true)
+    {
+        //intake movement
+        if(intakeState == 1)
+        {
+            //storage
+            intakeMid.move(127);
+			intakeTop.move(25);
+        }
+        else if(intakeState == 2)
+        {
+            //middle goal score
+            intakeMid.move(127);
+            intakeTop.move(127);
+        }
+        else if(intakeState == 3)
+        {
+            //High score
+            intakeMid.move(127);
+            intakeTop.move(-127);
+        }
+        else if(intakeState == 4)
+        {
+            //outtake
+            intakeMid.move(-127);
+        }
+        else if(intakeState == 0)
+        {
+            intakeMid.move(0);
+            intakeTop.move(0);
+        }
+    }
+} 
+
 //Helper function to move drivetrain in replay function
 void moveDrive(float leftDrivePower, float rightDrivePower)
 {
@@ -160,7 +202,7 @@ void replay(const char* filename)
         // convert ints back to bools and apply pistons
         piston1State = (p1Int != 0);
         piston2State = (p2Int != 0);
-        pistonControl(); // sets hardware based on piston1State/piston2State
+        pistonControl(); 
 
         // optional: update odom display or log playback position variables
         // pos_x = x; pos_y = y; heading = theta;  // only if you want to force odom (not recommended)
@@ -179,47 +221,8 @@ void replay(const char* filename)
     pros::lcd::print(0, "Replay finished!");
 }
 
-void pistonControl()
-{
-	piston1.set_value(piston1State);
-	piston2.set_value(piston2State);
-}
 
-void intakeControl()
-{
-    while(true)
-    {
-        //intake movement
-        if(intakeState == 1)
-        {
-            //storage
-            intakeMid.move(127);
-			intakeTop.move(25);
-        }
-        else if(intakeState == 2)
-        {
-            //middle goal score
-            intakeMid.move(127);
-            intakeTop.move(127);
-        }
-        else if(intakeState == 3)
-        {
-            //High score
-            intakeMid.move(127);
-            intakeTop.move(-127);
-        }
-        else if(intakeState == 4)
-        {
-            //outtake
-            intakeMid.move(-127);
-        }
-        else if(intakeState == 0)
-        {
-            intakeMid.move(0);
-            intakeTop.move(0);
-        }
-    }
-} 
+
 
 void driverIntake()
 {
