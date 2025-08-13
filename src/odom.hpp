@@ -2,7 +2,9 @@
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
 
-
+double pos_x;
+double pos_y;
+double heading;
 
 
 void odomInit();
