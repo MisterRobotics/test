@@ -48,9 +48,9 @@ double distance(double x1, double y1, double x2, double y2)
 const double x_offset = 4.0;  // Right sensor offset from center (in) 
 const double y_offset = 5.0;  // Back sensor offset from center (in)
 
-/*double pos_x = 7.5; // robots X position on the field
+double pos_x = 7.5; // robots X position on the field
 double pos_y = 4; // robots Y position on the field
-double heading = 0.0; // robots heading in radians*/
+double heading = 0.0; // robots heading in radians
 
 bool robotIsMoving() 
 {

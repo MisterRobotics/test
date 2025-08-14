@@ -52,13 +52,13 @@ void intakeControl()
         {
             //storage
             intakeMid.move(127);
-			intakeTop.move(25);
+			intakeTop.move(-18);
         }
         else if(intakeState == 2)
         {
             //middle goal score
             intakeMid.move(127);
-            intakeTop.move(127);
+            intakeTop.move(60);
         }
         else if(intakeState == 3)
         {
@@ -344,6 +344,16 @@ void opcontrol()
 			//moveToPoint(128, 44);
 			master.rumble(". - . -");
 		}*/
+
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
+		{
+			record("auton1");
+		}
+
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
+		{
+			replay("auton1");
+		}
 
 
 		
