@@ -345,9 +345,12 @@ void opcontrol()
 			master.rumble(". - . -");
 		}*/
 
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) 
 		{
-			record("auton1");
+    		pros::Task recordAuton([] 
+			{
+        		record("auton1");
+    		});
 		}
 
 		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
