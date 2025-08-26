@@ -180,14 +180,14 @@ void replay(const char* filename)
 
     // temporaries for scanning
     int leftPower, rightPower;
-    int intakeVal;
+    int intake;
     int p1Int, p2Int;
     double x, y, theta;
 
     const int interval = 15; // match recording interval
 
     while (fscanf(file, "%d,%d,%d,%d,%d,%lf,%lf,%lf\n",
-                  &leftPower, &rightPower, &intakeVal, &p1Int, &p2Int,
+                  &leftPower, &rightPower, &intake, &p1Int, &p2Int,
                   &x, &y, &theta) == 8) {
 
         // set drive — use same unit as recorded
@@ -195,9 +195,8 @@ void replay(const char* filename)
         rightDrive.move_voltage(rightPower);
 
         // set intake based on the recorded intakeVal (example mapping)
-        if (intakeVal > 0) intakeTop.move_voltage(12000);
-        else if (intakeVal < 0) intakeTop.move_voltage(-12000);
-        else intakeTop.move_voltage(0);
+        intakeState = intake;
+		intakeControl();
 
         // convert ints back to bools and apply pistons
         piston1State = (p1Int != 0);
@@ -327,7 +326,6 @@ void opcontrol()
 		//Variables
         int rightY = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
         int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
-
         //Drive Code for single stick
         leftDrive.move(rightY + rightX);
         rightDrive.move(rightY - rightX);
