@@ -137,7 +137,7 @@ void record(const char* filename)
         // read values (use ints for powers so fprintf/fscanf stay consistent)
         int leftPower = leftDrive.get_voltage();   // or get_power() depending on your API
         int rightPower = rightDrive.get_voltage();
-        int intake = intakeState;                  // ensure intakeState is int
+        int intakeVal = intakeState;                  // ensure intakeState is int
         bool p1 = piston1State;
         bool p2 = piston2State;
 		double xCoord = pos_x;
@@ -148,7 +148,7 @@ void record(const char* filename)
 		({
 			leftPower, 
 			rightPower, 
-			intake, 
+			intakeVal, 
 			p1, 
 			p2, 
 			xCoord, 
@@ -159,7 +159,7 @@ void record(const char* filename)
         // write line: left,right,intake,p1,p2,x,y,heading
         // use %d for ints, %f (or %.3f) for doubles
         fprintf(file, "%d,%d,%d,%d,%d,%.3f,%.3f,%.6f\n",
-                leftPower, rightPower, intake, p1 ? 1 : 0, p2 ? 1 : 0,
+                leftPower, rightPower, intakeVal, p1 ? 1 : 0, p2 ? 1 : 0,
                 pos_x, pos_y, heading);
 
         pros::delay(interval);
@@ -180,22 +180,23 @@ void replay(const char* filename)
 
     // temporaries for scanning
     int leftPower, rightPower;
-    int intake;
+    int intakeVal;
     int p1Int, p2Int;
     double x, y, theta;
 
     const int interval = 15; // match recording interval
 
     while (fscanf(file, "%d,%d,%d,%d,%d,%lf,%lf,%lf\n",
-                  &leftPower, &rightPower, &intake, &p1Int, &p2Int,
-                  &x, &y, &theta) == 8) {
+                  &leftPower, &rightPower, &intakeVal, &p1Int, &p2Int,
+                  &x, &y, &theta) == 8) 
+	{
 
         // set drive — use same unit as recorded
         leftDrive.move_voltage(leftPower);
         rightDrive.move_voltage(rightPower);
 
         // set intake based on the recorded intakeVal (example mapping)
-        intakeState = intake;
+        intakeState = intakeVal;
 		intakeControl();
 
         // convert ints back to bools and apply pistons
