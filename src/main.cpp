@@ -10,6 +10,8 @@ int auton = 0;
 int intakeState = 0;
 bool piston1State = false;
 bool piston2State = false;
+bool yDrift;
+bool xDrift;
 
 pros::Motor intakeMid(8, pros::MotorGearset::blue);
 pros::Motor intakeTop(9, pros::MotorGearset::green);
@@ -18,7 +20,7 @@ pros::adi::DigitalOut piston1('H', false);
 pros::adi::DigitalOut piston2('H', false);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
-pros::MotorGroup leftDrive({14,15,-16}, pros::MotorGearset::blue);
+pros::MotorGroup leftDrive({5,18,-7}, pros::MotorGearset::blue);
 pros::MotorGroup rightDrive({-17,-12,13}, pros::MotorGearset::blue);
 
 //Record + Replay auton functions and helpers
@@ -27,7 +29,8 @@ struct driveState
 {
     int leftDrivePower;
     int rightDrivePower;
-    int intakePower;
+    int midIntakeVal;
+	int upIntakeVal;
     bool piston1State;
     bool piston2State;
     double x;
@@ -57,7 +60,7 @@ void intakeControl()
         else if(intakeState == 2)
         {
             //middle goal score
-            intakeMid.move(127);
+            intakeMid.move(90);
             intakeTop.move(60);
         }
         else if(intakeState == 3)
@@ -70,6 +73,7 @@ void intakeControl()
         {
             //outtake
             intakeMid.move(-127);
+			intakeTop.move(127);
         }
         else if(intakeState == 0)
         {
@@ -79,14 +83,14 @@ void intakeControl()
     }
 } 
 
-//Helper function to move drivetrain in replay function
+/*Helper function to move drivetrain in replay function
 void moveDrive(float leftDrivePower, float rightDrivePower)
 {
 	leftDrive.move(leftDrivePower);
 	rightDrive.move(rightDrivePower);
-}
+}*/
 
-//Helper function to move drivetrain via distance sensor and inertial sensor
+/*Helper function to move drivetrain via distance sensor and inertial sensor
 void driveToPoint(float targetX, float targetY, float targetHeading)
 {
 	const float positionKP = 30;
@@ -114,7 +118,7 @@ void driveToPoint(float targetX, float targetY, float targetHeading)
 
 	//move robot
 	moveDrive(straightPower + turnPower, straightPower - turnPower);
-}
+}*/
 
 // --- RECORD ---
 void record(const char* filename) 
@@ -137,7 +141,8 @@ void record(const char* filename)
         // read values (use ints for powers so fprintf/fscanf stay consistent)
         int leftPower = leftDrive.get_voltage();   // or get_power() depending on your API
         int rightPower = rightDrive.get_voltage();
-        int intakeVal = intakeState;                  // ensure intakeState is int
+        int midIntVelo = intakeMid.get_voltage();
+		int upIntVelo = intakeTop.get_voltage();
         bool p1 = piston1State;
         bool p2 = piston2State;
 		double xCoord = pos_x;
@@ -148,7 +153,8 @@ void record(const char* filename)
 		({
 			leftPower, 
 			rightPower, 
-			intakeVal, 
+			midIntVelo,
+			upIntVelo, 
 			p1, 
 			p2, 
 			xCoord, 
@@ -159,7 +165,7 @@ void record(const char* filename)
         // write line: left,right,intake,p1,p2,x,y,heading
         // use %d for ints, %f (or %.3f) for doubles
         fprintf(file, "%d,%d,%d,%d,%d,%.3f,%.3f,%.6f\n",
-                leftPower, rightPower, intakeVal, p1 ? 1 : 0, p2 ? 1 : 0,
+                leftPower, rightPower, midIntVelo, upIntVelo, p1 ? 1 : 0, p2 ? 1 : 0,
                 pos_x, pos_y, heading);
 
         pros::delay(interval);
@@ -180,14 +186,15 @@ void replay(const char* filename)
 
     // temporaries for scanning
     int leftPower, rightPower;
-    int intakeVal;
+    int midIntVelo;
+	int upIntVelo;
     int p1Int, p2Int;
     double x, y, theta;
 
     const int interval = 15; // match recording interval
 
     while (fscanf(file, "%d,%d,%d,%d,%d,%lf,%lf,%lf\n",
-                  &leftPower, &rightPower, &intakeVal, &p1Int, &p2Int,
+                  &leftPower, &rightPower, &midIntVelo, &upIntVelo, &p1Int, &p2Int,
                   &x, &y, &theta) == 8) 
 	{
 
@@ -196,8 +203,12 @@ void replay(const char* filename)
         rightDrive.move_voltage(rightPower);
 
         // set intake based on the recorded intakeVal (example mapping)
-        intakeState = intakeVal;
-		intakeControl();
+        intakeMid.move(midIntVelo);
+		intakeTop.move(upIntVelo);
+		pros::Task setIntakeSpeed([]
+			{
+				intakeControl();
+			});
 
         // convert ints back to bools and apply pistons
         piston1State = (p1Int != 0);
@@ -324,12 +335,14 @@ void opcontrol()
 {
 	while(true)
 	{
-		//Variables
-        int rightY = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
+		//variables
+		int rightY = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_Y);
         int rightX = master.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
+
         //Drive Code for single stick
         leftDrive.move(rightY + rightX);
         rightDrive.move(rightY - rightX);
+
 
 		driverIntake();
 
