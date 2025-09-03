@@ -123,50 +123,49 @@ void driveToPoint(float targetX, float targetY, float targetHeading)
 // --- RECORD ---
 void record(const char* filename) 
 {
-    // clear previous memory log
     driveLog.clear();
 
-    // open file in truncate mode -> clears previous file of the same name
     FILE* file = fopen(filename, "w");
     if (!file) {
         pros::lcd::print(4, "SD write failed!");
         return;
     }
 
-    // 15 second recording window
     uint32_t start = pros::millis();
-    const int interval = 15; // ms
+    const int interval = 15;
     while (pros::millis() - start < 15000) 
-	{
-        // read values (use ints for powers so fprintf/fscanf stay consistent)
-        int leftPower = leftDrive.get_voltage();   // or get_power() depending on your API
+    {
+        int leftPower = leftDrive.get_voltage();
         int rightPower = rightDrive.get_voltage();
         int midIntVelo = intakeMid.get_voltage();
-		int upIntVelo = intakeTop.get_voltage();
+        int upIntVelo  = intakeTop.get_voltage();
         bool p1 = piston1State;
         bool p2 = piston2State;
-		double xCoord = pos_x;
-		double yCoord = pos_y;
-		double headingCoord = heading;
 
-        driveLog.push_back
-		({
-			leftPower, 
-			rightPower, 
-			midIntVelo,
-			upIntVelo, 
-			p1, 
-			p2, 
-			xCoord, 
-			yCoord, 
-			headingCoord
-		});
+        double xCoord = pos_x;
+        double yCoord = pos_y;
+        double headingCoord = heading;
 
-        // write line: left,right,intake,p1,p2,x,y,heading
-        // use %d for ints, %f (or %.3f) for doubles
-        fprintf(file, "%d,%d,%d,%d,%d,%.3f,%.3f,%.6f\n",
-                leftPower, rightPower, midIntVelo, upIntVelo, p1 ? 1 : 0, p2 ? 1 : 0,
-                pos_x, pos_y, heading);
+        // push into vector
+        driveLog.push_back(
+		{
+            leftPower,
+            rightPower,
+            midIntVelo,
+            upIntVelo,
+            p1,
+            p2,
+            xCoord,
+            yCoord,
+            headingCoord
+        });
+
+        // write ALL 9 values
+        fprintf(file, "%d,%d,%d,%d,%d,%d,%.3f,%.3f,%.6f\n",
+                leftPower, rightPower,
+                midIntVelo, upIntVelo,
+                p1 ? 1 : 0, p2 ? 1 : 0,
+                xCoord, yCoord, headingCoord);
 
         pros::delay(interval);
     }
@@ -174,6 +173,7 @@ void record(const char* filename)
     fclose(file);
     pros::lcd::print(4, "Recording saved!");
 }
+
 
 // --- REPLAY ---
 void replay(const char* filename) 
@@ -184,46 +184,36 @@ void replay(const char* filename)
         return;
     }
 
-    // temporaries for scanning
     int leftPower, rightPower;
-    int midIntVelo;
-	int upIntVelo;
+    int midIntVelo, upIntVelo;
     int p1Int, p2Int;
     double x, y, theta;
 
-    const int interval = 15; // match recording interval
+    const int interval = 15;
 
-    while (fscanf(file, "%d,%d,%d,%d,%d,%lf,%lf,%lf\n",
-                  &leftPower, &rightPower, &midIntVelo, &upIntVelo, &p1Int, &p2Int,
-                  &x, &y, &theta) == 8) 
-	{
-
-        // set drive — use same unit as recorded
+    // must read 9 values, same as fprintf
+    while (fscanf(file, "%d,%d,%d,%d,%d,%d,%lf,%lf,%lf\n",
+                  &leftPower, &rightPower,
+                  &midIntVelo, &upIntVelo,
+                  &p1Int, &p2Int,
+                  &x, &y, &theta) == 9) 
+    {
         leftDrive.move_voltage(leftPower);
         rightDrive.move_voltage(rightPower);
 
-        // set intake based on the recorded intakeVal (example mapping)
-        intakeMid.move(midIntVelo);
-		intakeTop.move(upIntVelo);
-		pros::Task setIntakeSpeed([]
-			{
-				intakeControl();
-			});
+        intakeMid.move_voltage(midIntVelo);
+        intakeTop.move_voltage(upIntVelo);
 
-        // convert ints back to bools and apply pistons
         piston1State = (p1Int != 0);
         piston2State = (p2Int != 0);
-        pistonControl(); 
-
-        // optional: update odom display or log playback position variables
-        // pos_x = x; pos_y = y; heading = theta;  // only if you want to force odom (not recommended)
+        pistonControl();
 
         pros::delay(interval);
     }
 
     fclose(file);
 
-    // stop everything after replay
+    // stop all
     leftDrive.move_voltage(0);
     rightDrive.move_voltage(0);
     intakeTop.move_voltage(0);
