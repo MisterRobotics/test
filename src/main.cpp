@@ -15,6 +15,7 @@ bool xDrift;
 
 pros::Motor intakeMid(8, pros::MotorGearset::blue);
 pros::Motor intakeTop(9, pros::MotorGearset::green);
+pros::Motor intakeIndexer(10, pros::MotorGearset::green);
 
 pros::adi::DigitalOut piston1('H', false);
 pros::adi::DigitalOut piston2('H', false);
@@ -120,7 +121,7 @@ void driveToPoint(float targetX, float targetY, float targetHeading)
 	moveDrive(straightPower + turnPower, straightPower - turnPower);
 }*/
 
-// --- RECORD ---
+// --- RECORD Function ---
 void record(const char* filename) 
 {
     driveLog.clear();
@@ -359,6 +360,17 @@ void opcontrol()
 		{
 			replay("auton1");
 		}
+
+        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_X))
+        {
+            intakeIndexer.move(127);
+        }
+        else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_Y))
+        {
+            intakeIndexer.move(-127);
+        }
+        else   
+            intakeIndexer.move(0);
 
 
 		
