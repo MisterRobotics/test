@@ -22,7 +22,11 @@ pros::adi::DigitalOut piston2('H', false);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({5,18,-7}, pros::MotorGearset::blue);
-pros::MotorGroup rightDrive({-17,-12,13}, pros::MotorGearset::blue);
+pros::MotorGroup rightDrive({-17,-12,13}, pros::MotorGearset::blue);\
+
+pros::Distance dist_right(9); // right distance sensor, tracks distance to right facing wall
+pros::Distance dist_back(11);  // back distance sensor, tracks distance to back facing wall
+pros::Imu imu(20);             //inertial sesnor, tracks heading
 
 //Record + Replay auton functions and helpers
 
@@ -221,6 +225,71 @@ void replay(const char* filename)
     intakeMid.move(0);
 
     pros::lcd::print(0, "Replay finished!");
+}
+
+//distance odom
+void driveRobot(float left, float right)
+{
+    //apply voltage of variables left and right to drive motors to spin them appropriatly
+    leftDrive.move(left);
+    rightDrive.move(right);
+}
+
+void turnToHeading(double targetAngle)
+{
+    //Creat P loop for turning, tolerance so that robot doesn't wobble trying to hit exact angle
+    const float kP = 105;
+    const float tolerance = 0.05;
+
+    //Turn robot to reach target
+    while(true)
+    {
+        odomUpdate(); //update position and heading
+        double error = targetAngle - get_heading_rad(); //calculate error which is used to determine how fast the robot moves
+        if(fabs(error) < tolerance) //stop if within tolerance
+            break;
+        
+        double motorPower = kP * error; //motor moving speed equals the kP times how far from target angle is
+        driveRobot(motorPower, -motorPower); //move robot
+        pros::delay(10);
+    }
+
+    driveRobot(0,0);
+    return;
+}
+
+void moveOneAxis(float targetY) 
+{
+    const float kP = 10;
+    const float kD = 0.5;
+    const float tolerance = 0.625;
+
+    double prevError = 0;
+
+    while (true) 
+    {
+        // calculate error
+        double error = targetY - pos_y;
+
+        // stop condition
+        if (fabs(error) < tolerance) {
+            break;
+        }
+
+        // derivative term to reduce overshoot/wobble
+        double derivative = (error - prevError) / 0.01; // since delay is 10ms
+        prevError = error;
+
+        double motorPower = (kP * error) + (kD * derivative);
+        motorPower = std::clamp(motorPower, -127.0, 127.0); // clamp motor power
+
+        // drive both sides forward with same power
+        driveRobot(motorPower, motorPower);
+
+        pros::delay(10);
+    }
+
+    driveRobot(0, 0); // full stop
 }
 
 
