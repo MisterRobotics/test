@@ -199,11 +199,11 @@ void replay(const char* filename)
                   &p1Int, &p2Int,
                   &x, &y, &theta) == 9) 
     {
-        leftDrive.move_voltage(leftPower);
-        rightDrive.move_voltage(rightPower);
+        leftDrive.move(leftPower);
+        rightDrive.move(rightPower);
 
-        intakeMid.move_voltage(midIntVelo);
-        intakeTop.move_voltage(upIntVelo);
+        intakeMid.move(midIntVelo);
+        intakeTop.move(upIntVelo);
 
         piston1State = (p1Int != 0);
         piston2State = (p2Int != 0);
@@ -215,10 +215,10 @@ void replay(const char* filename)
     fclose(file);
 
     // stop all
-    leftDrive.move_voltage(0);
-    rightDrive.move_voltage(0);
-    intakeTop.move_voltage(0);
-    intakeMid.move_voltage(0);
+    leftDrive.move(0);
+    rightDrive.move(0);
+    intakeTop.move(0);
+    intakeMid.move(0);
 
     pros::lcd::print(0, "Replay finished!");
 }
@@ -368,6 +368,7 @@ void opcontrol()
         else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_Y))
         {
             intakeIndexer.move(-127);
+            intakeState = 3;
         }
         else   
             intakeIndexer.move(0);
