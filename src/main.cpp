@@ -8,8 +8,9 @@
 //variables
 int auton = 0;
 int intakeState = 0;
-bool piston1State = false;
-bool piston2State = false;
+bool intakeHoodState = false;
+bool descoreArmState = false;
+bool scrapperState = false;
 bool yDrift;
 bool xDrift;
 
@@ -17,8 +18,9 @@ pros::Motor intakeMid(8, pros::MotorGearset::blue);
 pros::Motor intakeTop(9, pros::MotorGearset::green);
 pros::Motor intakeIndexer(10, pros::MotorGearset::green);
 
-pros::adi::DigitalOut piston1('H', false);
-pros::adi::DigitalOut piston2('H', false);
+pros::adi::DigitalOut intakeHood('H', false);
+pros::adi::DigitalOut descoreArm('B', false);
+pros::adi::DigitalOut scrapperMech('C', false);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({5,18,-7}, pros::MotorGearset::blue);
@@ -47,8 +49,9 @@ std::vector<driveState> driveLog;
 
 void pistonControl()
 {
-	piston1.set_value(piston1State);
-	piston2.set_value(piston2State);
+	intakeHood.set_value(intakeHoodState);
+	descoreArm.set_value(descoreArmState);
+    scrapperMech.set_value(scrapperState);
 }
 
 void intakeControl()
@@ -144,8 +147,8 @@ void record(const char* filename)
         int rightPower = rightDrive.get_voltage();
         int midIntVelo = intakeMid.get_voltage();
         int upIntVelo  = intakeTop.get_voltage();
-        bool p1 = piston1State;
-        bool p2 = piston2State;
+        bool p1 = intakeHoodState;
+        bool p2 = scrapperState;
 
         double xCoord = pos_x;
         double yCoord = pos_y;
@@ -209,8 +212,8 @@ void replay(const char* filename)
         intakeMid.move(midIntVelo);
         intakeTop.move(upIntVelo);
 
-        piston1State = (p1Int != 0);
-        piston2State = (p2Int != 0);
+        intakeHoodState = (p1Int != 0);
+        scrapperState = (p2Int != 0);
         pistonControl();
 
         pros::delay(interval);
@@ -417,20 +420,8 @@ void opcontrol()
 			master.rumble(". - . -");
 		}*/
 
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) 
-		{
-    		pros::Task recordAuton([] 
-			{
-        		record("auton1");
-    		});
-		}
-
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
-		{
-			replay("auton1");
-		}
-
-        if(master.get_digital(pros::E_CONTROLLER_DIGITAL_X))
+        //run indexer in hopper
+		if(master.get_digital(pros::E_CONTROLLER_DIGITAL_X))
         {
             intakeIndexer.move(127);
         }
@@ -442,6 +433,21 @@ void opcontrol()
         else   
             intakeIndexer.move(0);
 
+        //change pistons state
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
+        {
+            intakeHoodState = !intakeHoodState;
+        }
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
+        {
+            descoreArmState = !descoreArmState;
+        }
+        if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN))
+        {
+            scrapperState = !scrapperState;
+        }
+
+        pistonControl();
 
 		
 		
