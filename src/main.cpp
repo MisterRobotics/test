@@ -377,7 +377,8 @@ void autonomous()
 	switch (auton)
 	{
 	case 0:
-		auton0();
+        //3 ball for lb requirements
+		moveOneAxis(60);
 		break;
 	case 1:
 		auton1();

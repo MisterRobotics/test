@@ -11,6 +11,7 @@
 //sensors
 pros::Distance dist_right(9); // right distance sensor, tracks distance to right facing wall
 pros::Distance dist_back(11);  // back distance sensor, tracks distance to back facing wall
+pros::Distance distFront(12);
 pros::Imu imu(20);             //inertial sesnor, tracks heading
 
 pros::Motor leftMotor(1, pros::MotorGearset::green);
