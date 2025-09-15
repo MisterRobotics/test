@@ -1,63 +1,61 @@
-################################################################################
-######################### User configurable parameters #########################
-# filename extensions
-CEXTS:=c
-ASMEXTS:=s S
-CXXEXTS:=cpp c++ cc
+###############################################################################
+# Raylib AMCL simulator: builds raylib (if missing), builds the sim, and runs
+###############################################################################
 
-# probably shouldn't modify these, but you may need them below
-ROOT=.
-FWDIR:=$(ROOT)/firmware
-BINDIR=$(ROOT)/bin
-SRCDIR=$(ROOT)/src
-INCDIR=$(ROOT)/include
+# C++ compiler (use existing value if already set)
+CXX ?= g++
 
-WARNFLAGS+=
-EXTRA_CFLAGS=
-EXTRA_CXXFLAGS=
+# Simulator source (change if your file name is different)
+SIM_SRCS := $(SRCDIR)/amcl_sim.cpp
+SIM_TARGET := $(BINDIR)/amcl_sim
 
-# Set to 1 to enable hot/cold linking
-USE_PACKAGE:=1
+# Raylib location (expects you put raylib source under external/raylib)
+RAYLIB_DIR := external/raylib
+RAYLIB_INC := -I$(RAYLIB_DIR)/src -I$(RAYLIB_DIR)/include
+RAYLIB_LIB := $(RAYLIB_DIR)/src/libraylib.a
 
-# Add libraries you do not wish to include in the cold image here
-# EXCLUDE_COLD_LIBRARIES:= $(FWDIR)/your_library.a
-EXCLUDE_COLD_LIBRARIES:= 
+# macOS frameworks needed by raylib (kept for mac builds)
+FRAMEWORKS := -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
 
-# Set this to 1 to add additional rules to compile your project as a PROS library template
-IS_LIBRARY:=0
-# TODO: CHANGE THIS! 
-# Be sure that your header files are in the include directory inside of a folder with the
-# same name as what you set LIBNAME to below.
-LIBNAME:=libbest
-VERSION:=1.0.0
-# EXCLUDE_SRC_FROM_LIB= $(SRCDIR)/unpublishedfile.c
-# this line excludes opcontrol.c and similar files
-EXCLUDE_SRC_FROM_LIB+=$(foreach file, $(SRCDIR)/main,$(foreach cext,$(CEXTS),$(file).$(cext)) $(foreach cxxext,$(CXXEXTS),$(file).$(cxxext)))
+# Default runtime arguments (image then map)
+SIM_ARGS ?= Maps/PBField.png Maps/map.txt
 
-# files that get distributed to every user (beyond your source archive) - add
-# whatever files you want here. This line is configured to add all header files
-# that are in the directory include/LIBNAME
-TEMPLATE_FILES=$(INCDIR)/$(LIBNAME)/*.h $(INCDIR)/$(LIBNAME)/*.hpp
+.PHONY: raylib-build raylib-sim run-raylib-sim clean-sim
 
-.DEFAULT_GOAL=quick
+# ---------------------------------------------------------------------------
+# Build raylib static lib if it's missing or out-of-date relative to its source
+# ---------------------------------------------------------------------------
+$(RAYLIB_LIB):
+	@echo ">>> Raylib static lib not found or out-of-date. Building raylib..."
+	@$(MAKE) -C $(RAYLIB_DIR)/src PLATFORM=PLATFORM_DESKTOP
+	@echo ">>> Raylib build finished."
 
-################################################################################
-################################################################################
-########## Nothing below this line should be edited by typical users ###########
--include ./common.mk
+raylib-build: $(RAYLIB_LIB)
 
+# ---------------------------------------------------------------------------
+# Build only (creates $(SIM_TARGET))
+# ---------------------------------------------------------------------------
+raylib-sim: $(SIM_TARGET)
+	@echo ">>> Built simulator: $(SIM_TARGET)"
+	@echo ">>> To run: make run-raylib-sim or ./$(SIM_TARGET) $(SIM_ARGS)"
 
-################################################################################
-############################## Custom Targets ##################################
-################################################################################
+# Link step: depends on simulator source and raylib static lib
+$(SIM_TARGET): $(SIM_SRCS) $(RAYLIB_LIB)
+	@mkdir -p $(BINDIR)
+	@echo ">>> Compiling simulator..."
+	$(CXX) -std=c++17 -O2 $(SIM_SRCS) -o $(SIM_TARGET) $(RAYLIB_INC) $(RAYLIB_LIB) $(FRAMEWORKS)
+	@chmod +x $(SIM_TARGET)
 
-# Raylib simulation target
-RAYLIB_DIR := $(ROOT)/raylib-5.5
-RAYLIB_INC := -I$(RAYLIB_DIR)/src -I$(INCDIR)
-RAYLIB_LIB := -L$(RAYLIB_DIR)/src -lraylib -lm -ldl -lpthread -lGL -lX11
+# ---------------------------------------------------------------------------
+# Build then run (use this most often)
+# ---------------------------------------------------------------------------
+run-raylib-sim: $(SIM_TARGET)
+	@echo ">>> Running simulator: ./$(SIM_TARGET) $(SIM_ARGS)"
+	./$(SIM_TARGET) $(SIM_ARGS)
 
-raylib: 
-	@echo ">>> Building Raylib simulation..."
-	$(CXX) $(SRCDIR)/*.cpp -o $(BINDIR)/raylib_sim $(RAYLIB_INC) $(RAYLIB_LIB)
-	@echo ">>> Running Raylib simulation..."
-	./$(BINDIR)/raylib_sim
+# ---------------------------------------------------------------------------
+# Clean simulator artifacts
+# ---------------------------------------------------------------------------
+clean-sim:
+	@echo ">>> Removing simulator $(SIM_TARGET)"
+	rm -f $(SIM_TARGET)
