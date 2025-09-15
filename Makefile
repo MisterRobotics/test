@@ -45,3 +45,19 @@ TEMPLATE_FILES=$(INCDIR)/$(LIBNAME)/*.h $(INCDIR)/$(LIBNAME)/*.hpp
 ################################################################################
 ########## Nothing below this line should be edited by typical users ###########
 -include ./common.mk
+
+
+################################################################################
+############################## Custom Targets ##################################
+################################################################################
+
+# Raylib simulation target
+RAYLIB_DIR := $(ROOT)/raylib-5.5
+RAYLIB_INC := -I$(RAYLIB_DIR)/src -I$(INCDIR)
+RAYLIB_LIB := -L$(RAYLIB_DIR)/src -lraylib -lm -ldl -lpthread -lGL -lX11
+
+raylib: 
+	@echo ">>> Building Raylib simulation..."
+	$(CXX) $(SRCDIR)/*.cpp -o $(BINDIR)/raylib_sim $(RAYLIB_INC) $(RAYLIB_LIB)
+	@echo ">>> Running Raylib simulation..."
+	./$(BINDIR)/raylib_sim
