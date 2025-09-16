@@ -167,7 +167,7 @@ void estimate_pose(const std::vector<Particle> &parts, double &est_x, double &es
 
 // ----- Main -----
 int main(int argc, char** argv) {
-    std::string field_image = "Maps/PBField.png";
+    std::string field_image = "Maps/PBOHField.png";
     std::string mapfile = "Maps/map.txt";
     if(argc >= 2) field_image = argv[1];
     if(argc >= 3) mapfile = argv[2];
