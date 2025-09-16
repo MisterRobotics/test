@@ -28,6 +28,7 @@ pros::MotorGroup rightDrive({-17,-12,13}, pros::MotorGearset::blue);\
 
 pros::Distance dist_right(9); // right distance sensor, tracks distance to right facing wall
 pros::Distance dist_back(11);  // back distance sensor, tracks distance to back facing wall
+pros::Distance distFront(14);
 pros::Imu imu(20);             //inertial sesnor, tracks heading
 
 //Record + Replay auton functions and helpers

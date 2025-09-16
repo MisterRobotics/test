@@ -106,6 +106,7 @@ void odomUpdate()
     // Convert sensor readings to inches (from mm)
     double right_dist = dist_right.get() / 25.4;
     double back_dist = dist_back.get() / 25.4;
+    double front_dist = distFront.get() / 25.4;
 
     // Get X pose
     prevX = pos_x;
@@ -114,7 +115,12 @@ void odomUpdate()
 
     //get y choord
     prevY = pos_y;
-    pos_y = back_dist + y_offset; /*sin(heading)*/
+    if(heading> -1.5 && heading < 1.5)
+    {
+        pos_y = back_dist + y_offset; /*sin(heading)*/
+    }
+    else
+        pos_y = front_dist + y_offset;
 
 }
 
