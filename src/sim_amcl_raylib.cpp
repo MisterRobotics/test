@@ -1,7 +1,7 @@
 // sim_amcl_raylib.cpp
 // Adaptive Monte Carlo Localization simulation using raylib
 // Controls: W forward, S back, A turn left, D turn right, Q quit
-// Usage: ./sim_amcl <field_image.png> <map.txt>
+/* Usage: ./sim_amcl <field_image.png> <map.txt>
 #include <raylib.h>
 #include <cmath>
 #include <vector>
@@ -406,3 +406,5 @@ int main(int argc, char** argv) {
     CloseWindow();
     return 0;
 }
+
+*/
