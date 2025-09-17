@@ -18,9 +18,9 @@ pros::Motor intakeMid(8, pros::MotorGearset::blue);
 pros::Motor intakeTop(9, pros::MotorGearset::green);
 pros::Motor intakeIndexer(10, pros::MotorGearset::green);
 
-pros::adi::DigitalOut intakeHood('H', false);
-pros::adi::DigitalOut descoreArm('B', false);
-pros::adi::DigitalOut scrapperMech('C', false);
+pros::adi::DigitalOut intakeHood('A', false);
+pros::adi::DigitalOut descoreArm('C', false);
+pros::adi::DigitalOut scrapperMech('B', false);
 
 pros::Controller master(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftDrive({5,18,-7}, pros::MotorGearset::blue);
@@ -71,6 +71,8 @@ void intakeControl()
             //middle goal score
             intakeMid.move(90);
             intakeTop.move(60);
+            descoreArm.set_value(true);
+            descoreArmState = true;
         }
         else if(intakeState == 3)
         {

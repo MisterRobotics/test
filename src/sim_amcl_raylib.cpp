@@ -1,8 +1,10 @@
 // sim_amcl_raylib.cpp
+//run command: g++ src/sim_amcl_raylib.cpp -I./include -L./lib -lraylib
+// ./a.out
 // Adaptive Monte Carlo Localization simulation using raylib
 // Controls: W forward, S back, A turn left, D turn right, Q quit
-/* Usage: ./sim_amcl <field_image.png> <map.txt>
-#include <raylib.h>
+// Usage: ./sim_amcl <field_image.png> <map.txt>
+#include "raylib/src/raylib.h"
 #include <cmath>
 #include <vector>
 #include <random>
@@ -15,9 +17,9 @@
 #include <iomanip>
 
 // ----- CONFIG -----
-static const double FIELD_SIZE_MM = 3658.0; // mm (12 ft)
-static const int WIN_W = 1000;
-static const int WIN_H = 1000;
+static const double FIELD_SIZE_MM = 144.0; // mm (12 ft)
+static const int WIN_W = 720;
+static const int WIN_H = 720;
 static const double PIXELS_PER_MM_DEFAULT = (double)WIN_W / FIELD_SIZE_MM;
 
 static const int MIN_PARTICLES = 200;
@@ -406,5 +408,3 @@ int main(int argc, char** argv) {
     CloseWindow();
     return 0;
 }
-
-*/
